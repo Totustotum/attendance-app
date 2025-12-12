@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Check-In</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; background-color: #f0f2f5; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; color: #333; }
+        input { width: 90%; padding: 12px; margin: 15px 0; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        #reader { width: 100%; margin-bottom: 20px; border-radius: 8px; overflow: hidden; }
+        #status { margin-top: 15px; font-weight: bold; color: #555; min-height: 24px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Student Check-In</h2>
+        <input type="text" id="studentName" placeholder="Enter your Full Name">
+        
+        <div id="reader"></div>
+        <p id="status">Please allow camera access.</p>
+    </div>
+
+    <script>
+        // ==========================================
+        // PASTE YOUR GOOGLE WEB APP URL BELOW
+        // ==========================================
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQi2HB5J73z345jhht1U5BBqEoxMA_m4iiO9M5Ir6ygO49OSUcZ3c4gQff6VNR4iJing/exec"; 
+        // ==========================================
+
+        let html5QrcodeScanner;
+
+        function onScanSuccess(decodedText) {
+            const name = document.getElementById("studentName").value.trim();
+            if (!name) {
+                alert("Please enter your name first!");
+                return;
+            }
+
+            // 1. Stop the camera
+            html5QrcodeScanner.clear();
+            document.getElementById("status").innerText = "Sending attendance...";
+
+            // 2. Send data to Google Sheets
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors", 
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify({ name: name, sessionId: decodedText })
+            }).then(() => {
+                // Success Message
+                document.getElementById("status").innerHTML = 
+                    `<span style="color:green; font-size:1.2em;">✅ Check-in Successful!</span><br>See you in class, ${name}.`;
+            }).catch(error => {
+                console.error("Error:", error);
+                document.getElementById("status").innerText = "Connection error. Please try again.";
+            });
+        }
+
+        // Initialize Scanner
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
+</body>
+</html>

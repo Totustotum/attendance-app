@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f4f6f8; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        h1 { margin-top: 0; color: #333; }
+        #session-id { font-size: 1.5rem; color: #666; margin-bottom: 20px; font-family: monospace; letter-spacing: 2px; }
+        #qrcode { display: flex; justify-content: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Class Attendance</h1>
+        <div id="session-id">Loading...</div>
+        <div id="qrcode"></div>
+        <p>Scan to check in</p>
+    </div>
+
+    <script>
+        // --- SETTINGS ---
+        const CLASS_NAME = "GD202"; // Change this to your class name
+        // ----------------
+
+        // Create a unique ID for today: "GD400-2025-12-08"
+        const today = new Date().toISOString().slice(0, 10);
+        const sessionId = `${CLASS_NAME}-${today}`;
+
+        // Display text
+        document.getElementById("session-id").innerText = sessionId;
+
+        // Generate QR Code
+        new QRCode(document.getElementById("qrcode"), {
+            text: sessionId,
+            width: 300,
+            height: 300,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    </script>
+</body>
+</html>

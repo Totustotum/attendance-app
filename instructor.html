@@ -9,33 +9,39 @@
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f4f6f8; margin: 0; }
         .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
         h1 { margin-top: 0; color: #333; }
-        #session-id { font-size: 1.5rem; color: #666; margin-bottom: 20px; font-family: monospace; letter-spacing: 2px; }
+        #session-id { font-size: 1.2rem; color: #666; margin-bottom: 20px; font-family: monospace; }
         #qrcode { display: flex; justify-content: center; margin: 20px 0; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>Class Attendance</h1>
-        <div id="session-id">Loading...</div>
+        <div id="session-id">Generating...</div>
         <div id="qrcode"></div>
-        <p>Scan to check in</p>
+        <p>Scan with your native phone camera.</p>
     </div>
 
     <script>
-        // --- SETTINGS ---
-        const CLASS_NAME = "GD202"; // Change this to your class name
-        // ----------------
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        const CLASS_NAME = "GD202"; 
+        // IMPORTANT: The link to your student page (index.html)
+        // Ensure it ends with a slash / 
+        const BASE_URL = "https://totustotum.github.io/attendance-app/"; 
+        // ==========================================
 
-        // Create a unique ID for today: "GD400-2025-12-08"
         const today = new Date().toISOString().slice(0, 10);
         const sessionId = `${CLASS_NAME}-${today}`;
+        
+        // This creates the magic link: 
+        // https://.../?session=GD400-2025-01-04
+        const deepLink = `${BASE_URL}?session=${sessionId}`;
 
-        // Display text
         document.getElementById("session-id").innerText = sessionId;
 
-        // Generate QR Code
         new QRCode(document.getElementById("qrcode"), {
-            text: sessionId,
+            text: deepLink, // We are encoding the LINK, not just the ID
             width: 300,
             height: 300,
             colorDark : "#000000",

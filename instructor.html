@@ -31,7 +31,15 @@
         const BASE_URL = "https://totustotum.github.io/attendance-app/"; 
         // ==========================================
 
-        const today = new Date().toISOString().slice(0, 10);
+        // --- DATE CONFIGURATION (Forced EST/EDT) ---
+        // This forces the format YYYY-MM-DD based on New York time
+        const today = new Intl.DateTimeFormat('en-CA', { 
+            timeZone: 'America/New_York',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).format(new Date());
+        
         const sessionId = `${CLASS_NAME}-${today}`;
         
         // This creates the magic link: 

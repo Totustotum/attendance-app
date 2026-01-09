@@ -31,25 +31,29 @@
         const BASE_URL = "https://totustotum.github.io/attendance-app/"; 
         // ==========================================
 
-        // --- DATE CONFIGURATION (Forced EST/EDT) ---
-        // This forces the format YYYY-MM-DD based on New York time
-        const today = new Intl.DateTimeFormat('en-CA', { 
+        // 1. Get Date and Day Name (e.g., "Thu")
+        const now = new Date();
+        const formatter = new Intl.DateTimeFormat('en-CA', { 
             timeZone: 'America/New_York',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }).format(new Date());
+            year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' 
+        });
         
-        const sessionId = `${CLASS_NAME}-${today}`;
-        
-        // This creates the magic link: 
-        // https://.../?session=GD400-2025-01-04
-        const deepLink = `${BASE_URL}?session=${sessionId}`;
+        // This creates parts like: [{type: "weekday", value: "Thu"}, ...]
+        const parts = formatter.formatToParts(now);
+        const dayName = parts.find(p => p.type === 'weekday').value; // "Thu"
+        const dateStr = parts.find(p => p.type === 'year').value + '-' + 
+                        parts.find(p => p.type === 'month').value + '-' + 
+                        parts.find(p => p.type === 'day').value;
 
+        // 2. Create Readable Session ID: "GD400-Thu-2026-01-08"
+        const sessionId = `${CLASS_NAME}-${dayName}-${dateStr}`;
+
+        // 3. Generate Link & QR
+        const deepLink = `${BASE_URL}?session=${sessionId}`;
         document.getElementById("session-id").innerText = sessionId;
 
         new QRCode(document.getElementById("qrcode"), {
-            text: deepLink, // We are encoding the LINK, not just the ID
+            text: deepLink,
             width: 300,
             height: 300,
             colorDark : "#000000",

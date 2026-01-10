@@ -8,7 +8,10 @@
         body { font-family: sans-serif; padding: 20px; text-align: center; background-color: #f0f2f5; display: flex; align-items: center; justify-content: center; height: 90vh; }
         .container { width: 100%; max-width: 400px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h2 { margin-top: 0; color: #333; }
+        
+        /* Dropdown Styling */
         input { width: 90%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        
         button { width: 100%; background-color: #007bff; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; }
         button:disabled { background-color: #ccc; }
         .info { background: #eef; padding: 10px; border-radius: 6px; margin-bottom: 20px; color: #444; font-size: 0.9em; }
@@ -20,53 +23,72 @@
         <h2>✅ Class Check-In</h2>
         
         <div class="info" id="session-info">
-            Detecting Session...
+            Loading Class Roster...
         </div>
 
-        <input type="text" id="studentName" placeholder="Enter your Full Name">
-        <button onclick="submitAttendance()" id="submitBtn">I'm Here</button>
+        <input list="roster-list" id="studentName" placeholder="Start typing your name...">
+        <datalist id="roster-list">
+            </datalist>
+
+        <button onclick="submitAttendance()" id="submitBtn" disabled>Loading...</button>
         <p id="message"></p>
     </div>
 
     <script>
         // ==========================================
-        // PASTE YOUR GOOGLE SCRIPT URL HERE
-        // ==========================================
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQi2HB5J73z345jhht1U5BBqEoxMA_m4iiO9M5Ir6ygO49OSUcZ3c4gQff6VNR4iJing/exec"; 
         // ==========================================
 
-        // 1. Get the Session ID from the URL (The magic part)
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get('session');
+        const submitBtn = document.getElementById("submitBtn");
 
-        // 2. Pre-fill Student Name from previous visits (Local Storage)
-        const savedName = localStorage.getItem("studentName");
-        if (savedName) {
-            document.getElementById("studentName").value = savedName;
-        }
+        // 1. Fetch Roster on Load
+        fetch(SCRIPT_URL)
+            .then(response => response.json())
+            .then(names => {
+                const list = document.getElementById("roster-list");
+                names.forEach(name => {
+                    const option = document.createElement("option");
+                    option.value = name;
+                    list.appendChild(option);
+                });
+                
+                // Enable UI
+                if (sessionId) {
+                    document.getElementById("session-info").innerText = "Session: " + sessionId;
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "I'm Here";
+                } else {
+                    document.getElementById("session-info").innerText = "Please scan the QR Code.";
+                }
 
-        // 3. Handle the UI
-        if (sessionId) {
-            document.getElementById("session-info").innerText = "Session: " + sessionId;
-        } else {
-            document.getElementById("main-card").innerHTML = "<h3>⚠️ No Session Found</h3><p>Please scan the QR code on the instructor's screen.</p>";
-        }
+                // Auto-fill saved name
+                const savedName = localStorage.getItem("studentName");
+                if (savedName) document.getElementById("studentName").value = savedName;
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById("session-info").innerText = "Error loading roster. Refresh page.";
+            });
 
+        // 2. Submit Logic
         function submitAttendance() {
-            const name = document.getElementById("studentName").value.trim();
-            if (!name) {
-                alert("Please enter your name.");
-                return;
+            const nameInput = document.getElementById("studentName");
+            const name = nameInput.value.trim();
+            const options = Array.from(document.getElementById("roster-list").options).map(o => o.value);
+            
+            // Validation: Warn if name isn't in roster
+            if (options.length > 0 && !options.includes(name)) {
+               if(!confirm("Name not found in roster. Submit anyway?")) return;
             }
 
-            // Save name for next time
-            localStorage.setItem("studentName", name);
+            if (!name) { alert("Please enter your name."); return; }
 
-            const btn = document.getElementById("submitBtn");
+            localStorage.setItem("studentName", name);
             const msg = document.getElementById("message");
-            
-            btn.disabled = true;
-            btn.innerText = "Checking in...";
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Checking in...";
 
             fetch(SCRIPT_URL, {
                 method: "POST",
@@ -74,12 +96,12 @@
                 headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify({ name: name, sessionId: sessionId })
             }).then(() => {
-                btn.style.backgroundColor = "#28a745";
-                btn.innerText = "Success";
-                msg.innerHTML = `<span style="color:green">You are checked in!</span>`;
+                submitBtn.style.backgroundColor = "#28a745";
+                submitBtn.innerText = "Success";
+                msg.innerHTML = `<span style="color:green">Checked in as:<br><b>${name}</b></span>`;
             }).catch(error => {
-                btn.disabled = false;
-                btn.innerText = "Try Again";
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Try Again";
                 msg.innerText = "Connection Failed.";
             });
         }

@@ -13,6 +13,7 @@
         button:disabled { background-color: #ccc; }
         .info { background: #eef; padding: 10px; border-radius: 6px; margin-bottom: 20px; color: #444; font-size: 0.9em; }
         #message { margin-top: 20px; font-weight: bold; }
+        .version { font-size: 10px; color: #aaa; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -23,11 +24,12 @@
         <datalist id="roster-list"></datalist>
         <button onclick="submitAttendance()" id="submitBtn" disabled>Loading...</button>
         <p id="message"></p>
+        <div class="version">v2.0 - GET Method</div>
     </div>
 
     <script>
         // ==========================================
-        // ⬇️ PASTE YOUR GOOGLE SCRIPT URL BELOW ⬇️
+        // ⬇️ PASTE THE URL THAT WORKED IN YOUR BROWSER ⬇️
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1Ri-KzxZ7biQaqgZfMyeJfv-06swQf4JIfUAbAKbadXCb00l2iZzmKcRw8KGBUaTD/exec"; 
         // ==========================================
 
@@ -68,7 +70,7 @@
             submitBtn.disabled = true;
             submitBtn.innerText = "Sending...";
 
-            // Create the URL with data attached
+            // Construct the exact same link you tested in the browser
             const finalUrl = SCRIPT_URL + "?name=" + encodeURIComponent(name) + "&session=" + encodeURIComponent(sessionId);
 
             fetch(finalUrl, {

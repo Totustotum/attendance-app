@@ -6,12 +6,42 @@
     <title>GD 317 Instructor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        /* I added a subtle orange tint to the background so you know it's GD 317 */
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #fff3e0; margin: 0; }
-        .card { background: white; padding: 60px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); text-align: center; }
-        h1 { margin-top: 0; color: #e65100; font-size:48px; font-weight: bold; }
-        #session-id { font-size: 1.2rem; color: #666; margin-bottom: 20px; font-family: monospace; line-height: 1.5; }
-        #qrcode { display: flex; justify-content: center; margin: 20px 0; }
+        /* Exact Original Styles from instructor.html */
+        body { 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            background-color: #e0e7ff; /* Original Light Blue Background */
+            margin: 0; 
+        }
+        .card { 
+            background: white; 
+            padding: 60px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            text-align: center; 
+        }
+        h1 { 
+            margin-top: 0; 
+            color: #1a237e; /* Original Indigo Text */
+            font-size: 48px; 
+            font-weight: bold; 
+        }
+        #session-id { 
+            font-size: 1.2rem; 
+            color: #666; 
+            margin-bottom: 20px; 
+            font-family: monospace; 
+            line-height: 1.5; 
+        }
+        #qrcode { 
+            display: flex; 
+            justify-content: center; 
+            margin: 20px 0; 
+        }
     </style>
 </head>
 <body>
@@ -23,13 +53,13 @@
     </div>
 
     <script>
-        // --- CONFIGURATION ---
+        // --- CONFIGURATION FOR GD 317 ---
         const CLASS_NAME = "GD317"; 
         
         // Thursday, Jan 15, 2026
         const START_DATE = new Date("2026-01-15"); 
         
-        // IMPORTANT: This points to the file you just created in Phase 3
+        // Points to the NEW student file
         const BASE_URL = "https://totustotum.github.io/attendance-app/checkin-317.html"; 
         // ---------------------
 
@@ -54,17 +84,13 @@
 
         const sessionId = `${CLASS_NAME}-${dayName}-${dateStr}`;
 
-        // Display the Week and ID
+        // Using #1a237e color to match the header
         document.getElementById("session-id").innerHTML = 
-            `<strong style="font-size:2em; color:#e65100">${weekText}</strong><br>${sessionId}`;
+            `<strong style="font-size:2em; color:#1a237e">${weekText}</strong><br>${sessionId}`;
 
-        // Generate QR Code
         new QRCode(document.getElementById("qrcode"), {
             text: `${BASE_URL}?session=${sessionId}`,
-            width: 300, 
-            height: 300, 
-            colorDark : "#000000", 
-            colorLight : "#ffffff",
+            width: 300, height: 300, colorDark : "#000000", colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.H
         });
     </script>

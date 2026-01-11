@@ -7,43 +7,67 @@
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f4f4f9; margin: 0; }
         .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
-        h1 { color: #333; }
         select { width: 100%; padding: 10px; margin: 20px 0; font-size: 16px; border-radius: 5px; border: 1px solid #ddd; }
         button { width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; }
         button:disabled { background-color: #ccc; }
-        #message { margin-top: 20px; font-weight: bold; }
+        
+        /* Debug Box Styling */
+        .debug-info { 
+            margin-top: 20px; 
+            padding: 10px; 
+            background: #ffebee; 
+            border: 1px solid #ffcdd2; 
+            color: #b71c1c; 
+            font-size: 12px; 
+            font-family: monospace;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>GD 317 Check-In</h1>
-        <p>Select your name to check in.</p>
+        
+        <p>Checking in for: <strong id="display-session" style="color:blue">Searching...</strong></p>
+
         <select id="name-select">
             <option value="">Loading roster...</option>
         </select>
         <button id="checkin-btn" disabled>Check In</button>
+        
         <div id="message"></div>
+        
+        <div id="debug-box" class="debug-info">Waiting for data...</div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        // PASTE YOUR NEW WEB APP URL HERE
+        // --- PASTE YOUR GOOGLE SCRIPT URL HERE ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1Ri-KzxZ7biQaqgZfMyeJfv-06swQf4JIfUAbAKbadXCb00l2iZzmKcRw8KGBUaTD/exec"; 
-        // ---------------------
+        // -----------------------------------------
 
         const nameSelect = document.getElementById('name-select');
         const checkinBtn = document.getElementById('checkin-btn');
         const messageDiv = document.getElementById('message');
+        const displaySession = document.getElementById('display-session');
+        const debugBox = document.getElementById('debug-box');
 
-        // 1. GET SESSION ID FROM URL (The Fix)
+        // 1. Grab Session ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const currentSession = urlParams.get('session');
 
-        if (!currentSession) {
-            messageDiv.innerHTML = "<span style='color:red'>Error: Invalid Session. Please scan the QR code again.</span>";
+        // 2. SHOW IT ON SCREEN (Debugging)
+        if (currentSession) {
+            displaySession.textContent = currentSession;
+            displaySession.style.color = "green";
+            debugBox.textContent = "Session Found: " + currentSession;
+        } else {
+            displaySession.textContent = "MISSING ID";
+            displaySession.style.color = "red";
+            debugBox.textContent = "ERROR: No 'session' parameter in URL. Scan QR again.";
+            checkinBtn.style.display = 'none'; // Hide button if broken
         }
 
-        // 2. LOAD ROSTER
+        // 3. Load Roster
         fetch(SCRIPT_URL)
             .then(response => response.json())
             .then(names => {
@@ -54,32 +78,24 @@
                     option.textContent = name;
                     nameSelect.appendChild(option);
                 });
-                checkinBtn.disabled = false;
+                if (currentSession) checkinBtn.disabled = false;
             })
             .catch(error => {
                 nameSelect.innerHTML = '<option>Error loading roster</option>';
-                console.error('Error:', error);
+                debugBox.textContent += " | Roster Error: " + error.message;
             });
 
-        // 3. SEND ATTENDANCE
+        // 4. Send Data
         checkinBtn.addEventListener('click', () => {
             const selectedName = nameSelect.value;
-            if (!selectedName) {
-                alert("Please select your name.");
-                return;
-            }
-            if (!currentSession) {
-                alert("Missing Session ID. Scan the QR code again.");
-                return;
-            }
+            if (!selectedName) return;
 
             checkinBtn.disabled = true;
-            checkinBtn.textContent = "Checking in...";
-
-            const payload = {
-                name: selectedName,
-                session: currentSession // <--- Sending the ID we caught earlier
-            };
+            checkinBtn.textContent = "Sending...";
+            
+            // Log what we are sending
+            const payload = { name: selectedName, session: currentSession };
+            debugBox.textContent = "Sending: " + JSON.stringify(payload);
 
             fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -89,11 +105,12 @@
             }).then(() => {
                 document.querySelector('.card').innerHTML = `
                     <h1 style="color:green">Success!</h1>
-                    <p>You are checked in.</p>
-                    <p><strong>${selectedName}</strong></p>
+                    <p>Checked in <strong>${selectedName}</strong></p>
+                    <p>Session: ${currentSession}</p>
                 `;
             }).catch(error => {
-                messageDiv.innerHTML = "<span style='color:red'>Connection failed. Try again.</span>";
+                messageDiv.innerHTML = "<span style='color:red'>Failed. See debug box.</span>";
+                debugBox.textContent += " | Send Error: " + error.message;
                 checkinBtn.disabled = false;
             });
         });

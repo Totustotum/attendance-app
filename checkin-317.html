@@ -5,150 +5,170 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GD 317 Check-In</title>
     <style>
-        /* --- ORIGINAL GD 202 STYLES --- */
+        /* --- EXACT MATCH TO YOUR REQUESTED STYLE --- */
         body { 
             font-family: sans-serif; 
+            padding: 20px; 
+            text-align: center; 
+            background-color: #f0f2f5; 
             display: flex; 
-            flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            height: 100vh; 
-            background-color: #e0e7ff; 
-            margin: 0; 
+            height: 90vh; 
+            margin: 0;
         }
-
-        .card { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 16px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
-            text-align: center; 
-            width: 90%; 
-            max-width: 400px; 
-        }
-
-        h1 { 
-            margin-top: 0; 
-            color: #1a237e; 
-            font-size: 28px; /* Standardized Mobile Size */
-        }
-
-        p {
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        select { 
+        
+        .container { 
             width: 100%; 
-            padding: 12px; 
-            margin-bottom: 20px; 
-            font-size: 16px; 
-            border: 1px solid #ccc; 
-            border-radius: 8px; 
-            background-color: #fff;
-            box-sizing: border-box; /* Fixes width issues */
+            max-width: 400px; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            box-sizing: border-box; /* Ensures padding doesn't break mobile width */
         }
-
-        button { 
+        
+        h2 { 
+            margin-top: 0; 
+            color: #333; 
+        }
+        
+        /* Dropdown/Input Styling */
+        input { 
             width: 100%; 
             padding: 15px; 
-            background-color: #1a237e; 
+            margin: 15px 0; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            box-sizing: border-box; /* Fixes width issues */
+        }
+        
+        button { 
+            width: 100%; 
+            background-color: #007bff; 
             color: white; 
             border: none; 
+            padding: 15px; 
             border-radius: 8px; 
             font-size: 18px; 
-            font-weight: bold;
             cursor: pointer; 
+            font-weight: bold; 
         }
-
+        
         button:disabled { 
-            background-color: #9fa8da; 
+            background-color: #ccc; 
         }
-
+        
+        .info { 
+            background: #eef; 
+            padding: 10px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
+            color: #444; 
+            font-size: 0.9em; 
+        }
+        
         #message { 
-            margin-top: 15px; 
-            font-size: 14px;
-            min-height: 20px;
+            margin-top: 20px; 
+            font-weight: bold; 
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>GD 317 Check-In</h1>
-        <p>Select your name to check in</p>
+    <div class="container" id="main-card">
+        <h2>✅ Class Check-In</h2>
+        
+        <div class="info" id="session-info">
+            Loading Class Roster...
+        </div>
 
-        <select id="name-select">
-            <option value="">Loading roster...</option>
-        </select>
-        
-        <button id="checkin-btn" disabled>Check In</button>
-        
-        <div id="message"></div>
+        <input list="roster-list" id="studentName" placeholder="Start typing your name...">
+        <datalist id="roster-list">
+            </datalist>
+
+        <button onclick="submitAttendance()" id="submitBtn" disabled>Loading...</button>
+        <p id="message"></p>
     </div>
 
     <script>
-        // --- PASTE YOUR GOOGLE SCRIPT URL HERE ---
+        // ==========================================
+        // PASTE YOUR GD 317 WEB APP URL HERE
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1Ri-KzxZ7biQaqgZfMyeJfv-06swQf4JIfUAbAKbadXCb00l2iZzmKcRw8KGBUaTD/exec"; 
-        // -----------------------------------------
+        // ==========================================
 
-        const nameSelect = document.getElementById('name-select');
-        const checkinBtn = document.getElementById('checkin-btn');
-        const messageDiv = document.getElementById('message');
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get('session');
+        const submitBtn = document.getElementById("submitBtn");
 
-        // 1. Get Session ID
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentSession = urlParams.get('session');
-
-        if (!currentSession) {
-            messageDiv.innerHTML = "<span style='color:red'>Error: Invalid Session. Scan QR again.</span>";
-        }
-
-        // 2. Load Roster
+        // 1. Fetch Roster on Load
         fetch(SCRIPT_URL)
             .then(response => response.json())
             .then(names => {
-                nameSelect.innerHTML = '<option value="">Select your name...</option>';
+                const list = document.getElementById("roster-list");
                 names.forEach(name => {
-                    const option = document.createElement('option');
+                    const option = document.createElement("option");
                     option.value = name;
-                    option.textContent = name;
-                    nameSelect.appendChild(option);
+                    list.appendChild(option);
                 });
-                if (currentSession) checkinBtn.disabled = false;
+                
+                // Enable UI
+                if (sessionId) {
+                    document.getElementById("session-info").innerText = "Session: " + sessionId;
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "I'm Here";
+                } else {
+                    document.getElementById("session-info").innerText = "Error: Please scan the QR Code again.";
+                    document.getElementById("session-info").style.color = "red";
+                }
+
+                // Auto-fill saved name
+                const savedName = localStorage.getItem("studentName");
+                if (savedName) document.getElementById("studentName").value = savedName;
             })
-            .catch(error => {
-                nameSelect.innerHTML = '<option>Error loading roster</option>';
+            .catch(err => {
+                console.error(err);
+                document.getElementById("session-info").innerText = "Error loading roster. Refresh page.";
             });
 
-        // 3. Send Data (The Form Data Logic)
-        checkinBtn.addEventListener('click', () => {
-            const selectedName = nameSelect.value;
-            if (!selectedName || !currentSession) return;
+        // 2. Submit Logic
+        function submitAttendance() {
+            const nameInput = document.getElementById("studentName");
+            const name = nameInput.value.trim();
+            
+            // Check if name is in the list
+            const options = Array.from(document.getElementById("roster-list").options).map(o => o.value);
+            
+            if (!name) { alert("Please enter your name."); return; }
 
-            checkinBtn.disabled = true;
-            checkinBtn.textContent = "Checking in...";
+            // Warn if name isn't in roster (Typo prevention)
+            if (options.length > 0 && !options.includes(name)) {
+               if(!confirm("Name not found in roster. Submit anyway?")) return;
+            }
 
+            localStorage.setItem("studentName", name);
+            const msg = document.getElementById("message");
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Checking in...";
+
+            // --- THE CRITICAL FIX: Sending as Form Data ---
             const formData = new URLSearchParams();
-            formData.append('name', selectedName);
-            formData.append('session', currentSession);
+            formData.append('name', name);
+            formData.append('session', sessionId);
 
             fetch(SCRIPT_URL, {
-                method: 'POST',
+                method: "POST",
                 body: formData 
             }).then(() => {
-                document.querySelector('.card').innerHTML = `
-                    <h1 style="color:#1a237e">Success!</h1>
-                    <p>You are checked in.</p>
-                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                `;
+                submitBtn.style.backgroundColor = "#28a745"; // Green success
+                submitBtn.innerText = "Success";
+                msg.innerHTML = `<span style="color:green">Checked in as:<br><b>${name}</b></span>`;
             }).catch(error => {
-                messageDiv.innerHTML = "<span style='color:red'>Connection failed. Try again.</span>";
-                checkinBtn.disabled = false;
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Try Again";
+                msg.innerText = "Connection Failed.";
             });
-        });
+        }
     </script>
 </body>
 </html>

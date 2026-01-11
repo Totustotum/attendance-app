@@ -81,33 +81,48 @@
                 document.getElementById("session-info").innerText = "Roster Load Failed";
             });
 
-        // 2. Submit Logic (The "Stay on Page" Fetch)
+// 2. Submit Logic (Instant UI + Background Send)
         function submitAttendance() {
             const name = document.getElementById("studentName").value.trim();
             if (!name) return alert("Enter your name");
 
+            // 1. Lock the Button
             localStorage.setItem("studentName", name);
-            submitBtn.innerText = "Sending...";
+            submitBtn.innerText = "Checking in...";
             submitBtn.disabled = true;
 
-            const finalUrl = SCRIPT_URL + "?name=" + encodeURIComponent(name) + "&session=" + encodeURIComponent(sessionId);
+            // 2. Local Logic (Calculate Status instantly so we don't have to wait for Google)
+            const now = new Date();
+            const cutoff = new Date();
+            cutoff.setHours(9, 51, 0); // 9:51 AM Cutoff
 
-            // SEND DATA IN BACKGROUND
-            fetch(finalUrl)
-                .then(response => response.json())
-                .then(data => {
-                    // HIDE FORM, SHOW SUCCESS
-                    formView.style.display = "none";
-                    successView.style.display = "block";
-                    document.getElementById("success-details").innerHTML = "<b>" + name + "</b><br>" + data.status;
-                })
-                .catch(error => {
-                    // Fallback for network errors
-                    alert("Check-in likely saved, but network response failed.");
-                    console.error(error);
-                });
+            let status = "Present";
+            if (now > cutoff) {
+                status = "Late";
+            }
+
+            // 3. Show Success Screen IMMEDIATELY
+            formView.style.display = "none";
+            successView.style.display = "block";
+            document.getElementById("success-details").innerHTML = "<b>" + name + "</b><br>" + status;
+
+            // 4. Send to Google (Fire and Forget)
+            // mode: 'no-cors' prevents the "Network Error" by telling the browser 
+            // "I don't care about the receipt, just send it."
+            const finalUrl = SCRIPT_URL + "?name=" + encodeURIComponent(name) + "&session=" + encodeURIComponent(sessionId);
             
-            // CRITICAL: Stop the browser from leaving the page
+            fetch(finalUrl, { mode: 'no-cors' })
+                .then(() => {
+                    console.log("Data sent to Google.");
+                })
+                .catch(err => {
+                    // Even if this fails, the user has already seen success.
+                    // This only triggers if the internet is completely disconnected.
+                    console.error("Background send failed", err);
+                    alert("Note: Saved locally, but internet connection seems weak.");
+                });
+
+            // Stop the page from reloading
             return false;
         }
     </script>

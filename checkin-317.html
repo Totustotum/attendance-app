@@ -92,7 +92,7 @@
 
     <script>
         // ==========================================
-        // PASTE YOUR GD 317 WEB APP URL HERE
+        // I HAVE INSERTED YOUR URL BELOW:
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1Ri-KzxZ7biQaqgZfMyeJfv-06swQf4JIfUAbAKbadXCb00l2iZzmKcRw8KGBUaTD/exec"; 
         // ==========================================
 
@@ -121,7 +121,6 @@
                     document.getElementById("session-info").style.color = "red";
                 }
 
-                // Auto-fill saved name
                 const savedName = localStorage.getItem("studentName");
                 if (savedName) document.getElementById("studentName").value = savedName;
             })
@@ -134,13 +133,10 @@
         function submitAttendance() {
             const nameInput = document.getElementById("studentName");
             const name = nameInput.value.trim();
-            
-            // Check if name is in the list
             const options = Array.from(document.getElementById("roster-list").options).map(o => o.value);
             
             if (!name) { alert("Please enter your name."); return; }
 
-            // Warn if name isn't in roster (Typo prevention)
             if (options.length > 0 && !options.includes(name)) {
                if(!confirm("Name not found in roster. Submit anyway?")) return;
             }
@@ -150,19 +146,21 @@
             submitBtn.disabled = true;
             submitBtn.innerText = "Checking in...";
 
-            // --- THE CRITICAL FIX: Sending as Form Data ---
             const formData = new URLSearchParams();
             formData.append('name', name);
             formData.append('session', sessionId);
 
+            // --- THE FIX IS HERE ---
             fetch(SCRIPT_URL, {
                 method: "POST",
+                mode: "no-cors", // <--- THIS LINE FIXES "CONNECTION FAILED"
                 body: formData 
             }).then(() => {
-                submitBtn.style.backgroundColor = "#28a745"; // Green success
+                submitBtn.style.backgroundColor = "#28a745"; 
                 submitBtn.innerText = "Success";
                 msg.innerHTML = `<span style="color:green">Checked in as:<br><b>${name}</b></span>`;
             }).catch(error => {
+                console.error(error);
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Try Again";
                 msg.innerText = "Connection Failed.";

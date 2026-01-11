@@ -20,22 +20,33 @@
     <div class="container">
         <h2>✅ Class Check-In</h2>
         <div class="info" id="session-info">Loading Class Roster...</div>
+        
         <input list="roster-list" id="studentName" placeholder="Start typing your name...">
         <datalist id="roster-list"></datalist>
         <button onclick="submitAttendance()" id="submitBtn" disabled>Loading...</button>
         <p id="message"></p>
-        <div class="version">v2.0 - GET Method</div>
+        <div class="version">v3.0 - Iframe Method</div>
+
+        <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+        <form id="attendanceForm" method="GET" target="hidden_iframe" style="display:none;">
+            <input type="hidden" name="name" id="formName">
+            <input type="hidden" name="session" id="formSession">
+        </form>
     </div>
 
     <script>
         // ==========================================
-        // ⬇️ PASTE THE URL THAT WORKED IN YOUR BROWSER ⬇️
+        // ⬇️ PASTE YOUR GOOGLE SCRIPT URL BELOW ⬇️
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1Ri-KzxZ7biQaqgZfMyeJfv-06swQf4JIfUAbAKbadXCb00l2iZzmKcRw8KGBUaTD/exec"; 
         // ==========================================
 
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get('session');
         const submitBtn = document.getElementById("submitBtn");
+        const form = document.getElementById("attendanceForm");
+
+        // Set the form action to your script
+        form.action = SCRIPT_URL;
 
         // 1. Fetch Roster
         fetch(SCRIPT_URL)
@@ -60,31 +71,30 @@
             })
             .catch(err => console.error(err));
 
-        // 2. Submit Logic (GET Method)
+        // 2. Submit Logic (IFRAME FORM METHOD)
         function submitAttendance() {
             const name = document.getElementById("studentName").value.trim();
             if (!name) return alert("Enter your name");
 
             localStorage.setItem("studentName", name);
-            const msg = document.getElementById("message");
+            
+            // Lock the button
             submitBtn.disabled = true;
             submitBtn.innerText = "Sending...";
 
-            // Construct the exact same link you tested in the browser
-            const finalUrl = SCRIPT_URL + "?name=" + encodeURIComponent(name) + "&session=" + encodeURIComponent(sessionId);
+            // Fill the hidden form
+            document.getElementById("formName").value = name;
+            document.getElementById("formSession").value = sessionId;
 
-            fetch(finalUrl, {
-                method: "GET", 
-                mode: "no-cors"
-            }).then(() => {
+            // Submit the form "through" the hidden iframe
+            form.submit();
+
+            // Since we can't "hear" the iframe, we assume success after 1 second
+            setTimeout(() => {
                 submitBtn.style.backgroundColor = "#28a745"; 
                 submitBtn.innerText = "Success";
-                msg.innerHTML = `<span style="color:green">Checked in as:<br><b>${name}</b></span>`;
-            }).catch(error => {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Try Again";
-                msg.innerText = "Connection Failed.";
-            });
+                document.getElementById("message").innerHTML = `<span style="color:green">Checked in as:<br><b>${name}</b></span>`;
+            }, 500);
         }
     </script>
 </body>

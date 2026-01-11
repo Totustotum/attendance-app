@@ -5,22 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GD 317 Check-In</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f4f4f9; margin: 0; }
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
-        select { width: 100%; padding: 10px; margin: 20px 0; font-size: 16px; border-radius: 5px; border: 1px solid #ddd; }
-        button { width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; }
-        button:disabled { background-color: #ccc; }
-        #message { margin-top: 20px; font-weight: bold; }
+        /* --- GD 202 "BLUE" THEME --- */
+        body { 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            background-color: #e0e7ff; /* Light Blue Background */
+            margin: 0; 
+        }
+        .card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            text-align: center; 
+            width: 90%; 
+            max-width: 400px; 
+        }
+        h1 { 
+            color: #1a237e; /* Indigo Header */
+            margin-top: 0;
+        }
+        select { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 20px 0; 
+            font-size: 16px; 
+            border-radius: 8px; 
+            border: 1px solid #c5cbe3; 
+            background-color: #f8f9fa;
+        }
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            background-color: #1a237e; /* Indigo Button */
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 18px; 
+            font-weight: bold;
+            cursor: pointer; 
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #0d125a;
+        }
+        button:disabled { 
+            background-color: #9fa8da; 
+            cursor: not-allowed;
+        }
+        #message { 
+            margin-top: 20px; 
+            font-weight: bold; 
+        }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>GD 317 Check-In</h1>
-        <p>Select your name to check in.</p>
+        <p style="color:#666">Select your name to check in.</p>
+        
         <select id="name-select">
             <option value="">Loading roster...</option>
         </select>
+        
         <button id="checkin-btn" disabled>Check In</button>
+        
         <div id="message"></div>
     </div>
 
@@ -38,7 +91,7 @@
         const currentSession = urlParams.get('session');
 
         if (!currentSession) {
-            messageDiv.innerHTML = "<span style='color:red'>Error: Invalid Session. Scan QR again.</span>";
+            messageDiv.innerHTML = "<span style='color:#c62828'>Error: Invalid Session. Scan QR again.</span>";
         }
 
         // 2. Load Roster
@@ -58,7 +111,7 @@
                 nameSelect.innerHTML = '<option>Error loading roster</option>';
             });
 
-        // 3. Send Data (THE FIX: Using Form Data)
+        // 3. Send Data (The Form Data Fix)
         checkinBtn.addEventListener('click', () => {
             const selectedName = nameSelect.value;
             if (!selectedName || !currentSession) return;
@@ -66,21 +119,25 @@
             checkinBtn.disabled = true;
             checkinBtn.textContent = "Checking in...";
 
-            // Use URLSearchParams to send data as "Form Data"
+            // Use URLSearchParams to send data reliably
             const formData = new URLSearchParams();
             formData.append('name', selectedName);
             formData.append('session', currentSession);
 
             fetch(SCRIPT_URL, {
                 method: 'POST',
-                body: formData // <--- This is the key difference
+                body: formData 
             }).then(() => {
                 document.querySelector('.card').innerHTML = `
-                    <h1 style="color:green">Success!</h1>
+                    <h1 style="color:#1a237e">Success!</h1>
                     <p>You are checked in.</p>
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
                 `;
             }).catch(error => {
-                messageDiv.innerHTML = "<span style='color:red'>Connection failed. Try again.</span>";
+                messageDiv.innerHTML = "<span style='color:#c62828'>Connection failed. Try again.</span>";
                 checkinBtn.disabled = false;
             });
         });

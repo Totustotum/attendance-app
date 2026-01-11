@@ -5,30 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GD 317 Check-In</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; text-align: center; background-color: #f0f2f5; display: flex; align-items: center; justify-content: center; height: 90vh; margin: 0; }
+        body { font-family: sans-serif; padding: 20px; text-align: center; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; margin: 0; }
         .container { width: 100%; max-width: 400px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); box-sizing: border-box; }
         h2 { margin-top: 0; color: #333; }
         input { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        button { width: 100%; background-color: #007bff; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; }
+        button { width: 100%; background-color: #d9534f; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; }
         button:disabled { background-color: #ccc; }
         .info { background: #eef; padding: 10px; border-radius: 6px; margin-bottom: 20px; color: #444; font-size: 0.9em; }
-        #message { margin-top: 20px; font-weight: bold; }
-        .version { font-size: 10px; color: #aaa; margin-top: 20px; }
+        
+        /* DEBUG STYLES */
+        .debug-box { margin-top: 20px; padding: 10px; background: #333; color: #0f0; font-family: monospace; font-size: 10px; word-break: break-all; border-radius: 5px; text-align: left; }
+        iframe { width: 100%; height: 80px; border: 2px dashed red; background: #fff; margin-top: 15px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>✅ Class Check-In</h2>
-        <div class="info" id="session-info">Loading Class Roster...</div>
-        
+        <h2>🐞 Debug Mode v4.0</h2>
+        <div class="info" id="session-info">Loading...</div>
+
         <input list="roster-list" id="studentName" placeholder="Start typing your name...">
         <datalist id="roster-list"></datalist>
+        
         <button onclick="submitAttendance()" id="submitBtn" disabled>Loading...</button>
-        <p id="message"></p>
-        <div class="version">v3.0 - Iframe Method</div>
 
-        <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
-        <form id="attendanceForm" method="GET" target="hidden_iframe" style="display:none;">
+        <div class="debug-box">
+            <strong>TARGET URL:</strong><br>
+            <span id="url-display">...</span>
+        </div>
+
+        <p><strong>Google's Reply (The Red Box):</strong></p>
+        <iframe name="hidden_iframe" id="hidden_iframe"></iframe>
+
+        <form id="attendanceForm" method="GET" target="hidden_iframe" style="position:absolute; visibility:hidden;">
             <input type="hidden" name="name" id="formName">
             <input type="hidden" name="session" id="formSession">
         </form>
@@ -36,7 +44,7 @@
 
     <script>
         // ==========================================
-        // ⬇️ PASTE YOUR GOOGLE SCRIPT URL BELOW ⬇️
+        // ⬇️ PASTE THE URL THAT WORKED IN BROWSER ⬇️
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1Ri-KzxZ7biQaqgZfMyeJfv-06swQf4JIfUAbAKbadXCb00l2iZzmKcRw8KGBUaTD/exec"; 
         // ==========================================
 
@@ -45,7 +53,8 @@
         const submitBtn = document.getElementById("submitBtn");
         const form = document.getElementById("attendanceForm");
 
-        // Set the form action to your script
+        // Display the URL so you can verify it on your phone
+        document.getElementById("url-display").innerText = SCRIPT_URL;
         form.action = SCRIPT_URL;
 
         // 1. Fetch Roster
@@ -61,40 +70,30 @@
                 if (sessionId) {
                     document.getElementById("session-info").innerText = "Session: " + sessionId;
                     submitBtn.disabled = false;
-                    submitBtn.innerText = "I'm Here";
+                    submitBtn.innerText = "TEST SUBMIT";
                 } else {
                     document.getElementById("session-info").innerText = "Error: Please scan QR again.";
                     document.getElementById("session-info").style.color = "red";
                 }
-                const savedName = localStorage.getItem("studentName");
-                if (savedName) document.getElementById("studentName").value = savedName;
             })
-            .catch(err => console.error(err));
+            .catch(err => {
+                console.error(err);
+                document.getElementById("session-info").innerText = "Roster Load Failed";
+            });
 
-        // 2. Submit Logic (IFRAME FORM METHOD)
+        // 2. Submit Logic
         function submitAttendance() {
             const name = document.getElementById("studentName").value.trim();
             if (!name) return alert("Enter your name");
 
-            localStorage.setItem("studentName", name);
-            
-            // Lock the button
-            submitBtn.disabled = true;
             submitBtn.innerText = "Sending...";
-
-            // Fill the hidden form
+            
+            // Fill Form
             document.getElementById("formName").value = name;
             document.getElementById("formSession").value = sessionId;
 
-            // Submit the form "through" the hidden iframe
+            // Submit Form
             form.submit();
-
-            // Since we can't "hear" the iframe, we assume success after 1 second
-            setTimeout(() => {
-                submitBtn.style.backgroundColor = "#28a745"; 
-                submitBtn.innerText = "Success";
-                document.getElementById("message").innerHTML = `<span style="color:green">Checked in as:<br><b>${name}</b></span>`;
-            }, 500);
         }
     </script>
 </body>

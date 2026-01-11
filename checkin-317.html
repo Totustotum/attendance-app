@@ -18,6 +18,9 @@
         .success-icon { font-size: 50px; color: #28a745; margin-bottom: 20px; }
         .success-text { font-size: 20px; font-weight: bold; color: #333; }
         .success-sub { color: #666; margin-top: 10px; }
+
+        /* VERSION TAG (For Debugging) */
+        .version { margin-top: 20px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -26,11 +29,13 @@
         <div id="form-view">
             <h2>✅ Class Check-In</h2>
             <div class="info" id="session-info">Loading Class Roster...</div>
-        
+
             <input list="roster-list" id="studentName" placeholder="Start typing your name...">
             <datalist id="roster-list"></datalist>
             
             <button onclick="submitAttendance()" id="submitBtn" disabled>Loading...</button>
+
+            <div class="version" style="color:red; font-weight:bold;">v6.0 - INSTANT MODE</div>
         </div>
 
         <div id="success-view">
@@ -81,48 +86,35 @@
                 document.getElementById("session-info").innerText = "Roster Load Failed";
             });
 
-// 2. Submit Logic (Instant UI + Background Send)
+        // 2. Submit Logic (SILENT MODE: No Alerts, Instant UI)
         function submitAttendance() {
             const name = document.getElementById("studentName").value.trim();
             if (!name) return alert("Enter your name");
 
             // 1. Lock the Button
             localStorage.setItem("studentName", name);
-            submitBtn.innerText = "Checking in...";
+            submitBtn.innerText = "Done";
             submitBtn.disabled = true;
 
-            // 2. Local Logic (Calculate Status instantly so we don't have to wait for Google)
+            // 2. Local Logic (Calculate Status instantly)
             const now = new Date();
             const cutoff = new Date();
             cutoff.setHours(9, 51, 0); // 9:51 AM Cutoff
-
-            let status = "Present";
-            if (now > cutoff) {
-                status = "Late";
-            }
+            let status = (now > cutoff) ? "Late" : "Present";
 
             // 3. Show Success Screen IMMEDIATELY
             formView.style.display = "none";
             successView.style.display = "block";
             document.getElementById("success-details").innerHTML = "<b>" + name + "</b><br>" + status;
 
-            // 4. Send to Google (Fire and Forget)
-            // mode: 'no-cors' prevents the "Network Error" by telling the browser 
-            // "I don't care about the receipt, just send it."
+            // 4. Send to Google (Silent Background Send)
             const finalUrl = SCRIPT_URL + "?name=" + encodeURIComponent(name) + "&session=" + encodeURIComponent(sessionId);
             
             fetch(finalUrl, { mode: 'no-cors' })
-                .then(() => {
-                    console.log("Data sent to Google.");
-                })
-                .catch(err => {
-                    // Even if this fails, the user has already seen success.
-                    // This only triggers if the internet is completely disconnected.
-                    console.error("Background send failed", err);
-                    alert("Note: Saved locally, but internet connection seems weak.");
-                });
+                .then(() => console.log("Sent successfully"))
+                .catch(e => console.error("Silent background error:", e));
 
-            // Stop the page from reloading
+            // Stop page reload
             return false;
         }
     </script>

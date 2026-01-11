@@ -106,6 +106,9 @@
                     alert("Check-in likely saved, but network response failed.");
                     console.error(error);
                 });
+            
+            // CRITICAL: Stop the browser from leaving the page
+            return false;
         }
     </script>
 </body>
